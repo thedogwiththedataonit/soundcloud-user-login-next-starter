@@ -26,11 +26,11 @@ export async function GET() {
       return NextResponse.json({ error: 'No valid access token' }, { status: 401 });
     }
 
-    // Get user profile
+    // Get comprehensive user profile
     const userProfile = await SoundCloudAuth.getUserProfile(accessToken);
 
-    // Log the user profile to console as requested
-    console.log('Authenticated user response:', userProfile);
+    // Log the full user profile to console as requested
+    console.log('Authenticated user response (comprehensive):', userProfile);
 
     return NextResponse.json(userProfile);
   } catch (error) {

@@ -6,12 +6,16 @@ A Next.js application that demonstrates secure SoundCloud OAuth 2.0 authenticati
 
 - **🔐 Secure OAuth 2.0 Authentication** with PKCE for enhanced security
 - **🏪 Upstash KV Storage** for secure token and session management
-- **👤 User Profile Display** with avatar, stats, and bio information
+- **👤 Comprehensive User Profile** with detailed stats, subscription info, and account data
+- **🎵 Liked Tracks Display** with pagination, artwork, and track statistics
 - **🔄 Automatic Token Refresh** to maintain authentication
-- **📱 Responsive Design** with Tailwind CSS
+- **📱 Responsive Design** with Tailwind CSS and modern UI components
 - **⚡ Real-time Console Logging** of authenticated API responses
 - **🛡️ CSRF Protection** with state parameter validation
 - **🍪 Secure Session Management** with HTTP-only cookies
+- **📊 Track Statistics** including plays, likes, duration, and unique artists
+- **🎨 Rich Track Cards** with artwork, metadata, and social stats
+- **🔗 Direct SoundCloud Links** to tracks and artist profiles
 
 ## 🚀 Quick Start
 
@@ -28,10 +32,11 @@ Before you begin, ensure you have:
 
 1. Go to [SoundCloud Developers](https://soundcloud.com/you/apps)
 2. Create a new app or select an existing one
-3. In your app settings, set the **Redirect URI** to:
+3. In your soundcloud app settings, set the **Redirect URI** to:
    ```
    http://localhost:3000/login/success
    ```
+   Ask the soundcloud support for two apps, one with your production endpoint (https://myapp.com/redirect_uri) and one with a local endpoint (http://localhost:3000/redirect_uri). This way, you can use the respective id and secret id so that the redirect uri can be tested locally.
 4. Note down your **Client ID** and **Client Secret**
 
 ### 2. Upstash KV Setup
@@ -86,12 +91,23 @@ NEXTAUTH_URL=http://localhost:3000
 4. **Authorize** the app to access your basic profile information
 5. You'll be redirected back to the success page
 
-### Step 3: View Your Profile
-- After successful authentication, you'll see your SoundCloud profile including:
-  - **Avatar** and display name
-  - **Follower/Following** counts
-  - **Track and playlist** statistics
-  - **Bio** and location (if available)
+### Step 3: View Your Dashboard
+- After successful authentication, you'll see a tabbed interface with:
+
+**Profile Tab:**
+  - **Comprehensive user information** with avatar, display name, and online status
+  - **Detailed statistics** including followers, following, tracks, likes, reposts
+  - **Account information** like plan type, upload quota, and email verification
+  - **Privacy settings** showing private tracks and playlists  
+  - **Bio, location, and website** information
+  - **Subscription details** if applicable
+
+**Liked Tracks Tab:**
+  - **Paginated list** of your liked tracks with artwork
+  - **Track details** including title, artist, duration, and genre
+  - **Social statistics** showing plays, likes, and comments for each track
+  - **Aggregate statistics** for total plays, likes, duration, and unique artists
+  - **Direct links** to tracks and artists on SoundCloud
 
 ### Step 4: Console Logging
 - Check your browser's **Developer Console** or the **terminal** where you're running the app
@@ -144,19 +160,26 @@ src/
 │   │   │   ├── exchange-token/route.ts  # Exchange code for tokens
 │   │   │   └── logout/route.ts          # Handle logout
 │   │   └── user/
-│   │       └── profile/route.ts         # Get user profile
+│   │       ├── profile/route.ts         # Get comprehensive user profile
+│   │       └── liked-tracks/route.ts    # Get user's liked tracks
 │   ├── login/
-│   │   └── success/page.tsx             # OAuth callback & success page
+│   │   └── success/page.tsx             # OAuth callback & dashboard
 │   ├── globals.css                      # Global styles
 │   ├── layout.tsx                       # Root layout
 │   └── page.tsx                         # Main page
 ├── components/
 │   ├── SoundCloudSignIn.tsx             # Sign-in button
-│   └── UserProfile.tsx                  # User profile display
-└── lib/
-    ├── pkce.ts                          # PKCE utility functions
-    ├── soundcloud.ts                    # SoundCloud API service
-    └── upstash.ts                       # Upstash KV service
+│   ├── UserProfile.tsx                  # Basic user profile (legacy)
+│   ├── UserProfileDetailed.tsx          # Comprehensive user profile
+│   ├── LikedTracks.tsx                  # Liked tracks display with pagination
+│   └── TrackCard.tsx                    # Individual track card component
+├── lib/
+│   ├── pkce.ts                          # PKCE utility functions
+│   ├── soundcloud.ts                    # SoundCloud API service
+│   ├── soundcloud-types.ts              # TypeScript interfaces
+│   └── upstash.ts                       # Upstash KV service
+└── public/
+    └── music-placeholder.svg            # Placeholder for missing artwork
 ```
 
 ## 🔑 API Endpoints
@@ -165,7 +188,8 @@ src/
 |----------|--------|-------------|
 | `/api/auth/soundcloud` | GET | Initiate OAuth flow |
 | `/api/auth/exchange-token` | POST | Exchange auth code for tokens |
-| `/api/user/profile` | GET | Get authenticated user profile |
+| `/api/user/profile` | GET | Get comprehensive user profile |
+| `/api/user/liked-tracks` | GET | Get user's liked tracks with pagination |
 | `/api/auth/logout` | POST | Logout and clear session |
 
 ## 🛠️ Available Scripts

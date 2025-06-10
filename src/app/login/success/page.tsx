@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import UserProfile from '@/components/UserProfile';
-import { SoundCloudUser } from '@/lib/soundcloud';
+import UserProfileDetailed from '@/components/UserProfileDetailed';
+import LikedTracks from '@/components/LikedTracks';
+import { SoundCloudUser } from '@/lib/soundcloud-types';
 
 function LoginSuccessContent() {
   const router = useRouter();
@@ -11,6 +12,7 @@ function LoginSuccessContent() {
   const [user, setUser] = useState<SoundCloudUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'profile' | 'tracks'>('profile');
 
   useEffect(() => {
     const handleOAuthCallback = async () => {
@@ -112,7 +114,7 @@ function LoginSuccessContent() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Welcome to SoundCloud!
@@ -121,8 +123,45 @@ function LoginSuccessContent() {
             You have successfully authenticated with your SoundCloud account.
           </p>
         </div>
-        
-        {user && <UserProfile user={user} onLogout={handleLogout} />}
+
+        {user && (
+          <>
+            {/* Tab Navigation */}
+            <div className="flex justify-center mb-8">
+              <div className="bg-white rounded-lg shadow-lg p-1 inline-flex">
+                <button
+                  onClick={() => setActiveTab('profile')}
+                  className={`px-6 py-2 rounded-md font-medium transition-all duration-200 ${
+                    activeTab === 'profile'
+                      ? 'bg-orange-500 text-white shadow-md'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Profile
+                </button>
+                <button
+                  onClick={() => setActiveTab('tracks')}
+                  className={`px-6 py-2 rounded-md font-medium transition-all duration-200 ${
+                    activeTab === 'tracks'
+                      ? 'bg-orange-500 text-white shadow-md'
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Liked Tracks
+                </button>
+              </div>
+            </div>
+
+            {/* Tab Content */}
+            <div className="transition-all duration-300">
+              {activeTab === 'profile' ? (
+                <UserProfileDetailed user={user} onLogout={handleLogout} />
+              ) : (
+                <LikedTracks />
+              )}
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

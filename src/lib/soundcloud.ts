@@ -1,19 +1,10 @@
 import { generateCodeVerifier, generateCodeChallenge, generateState } from './pkce';
 import { TokenStore } from './upstash';
-
-export interface SoundCloudUser {
-  id: number;
-  username: string;
-  full_name: string;
-  avatar_url: string;
-  description: string;
-  city: string;
-  country: string;
-  followers_count: number;
-  followings_count: number;
-  track_count: number;
-  playlist_count: number;
-}
+import { 
+  SoundCloudUser, 
+  SoundCloudTracksResponse,
+  SoundCloudUserLegacy 
+} from './soundcloud-types';
 
 export interface TokenResponse {
   access_token: string;
@@ -89,7 +80,7 @@ export class SoundCloudAuth {
     };
   }
 
-  // Get user profile data
+  // Get comprehensive user profile data
   static async getUserProfile(accessToken: string): Promise<SoundCloudUser> {
     const response = await fetch(`${this.apiUrl}/me`, {
       headers: {
@@ -104,6 +95,84 @@ export class SoundCloudAuth {
     }
 
     return response.json();
+  }
+
+  // Get user's liked tracks
+  static async getUserLikedTracks(accessToken: string, limit: number = 20, offset: number = 0): Promise<SoundCloudTracksResponse> {
+    const url = new URL(`${this.apiUrl}/me/likes/tracks`);
+    url.searchParams.append('limit', limit.toString());
+    url.searchParams.append('offset', offset.toString());
+    url.searchParams.append('linked_partitioning', '1');
+
+    const response = await fetch(url.toString(), {
+      headers: {
+        'Accept': 'application/json; charset=utf-8',
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Failed to fetch liked tracks: ${error}`);
+    }
+
+    return response.json();
+  }
+
+  // Utility method to format duration
+  static formatDuration(milliseconds: number | null | undefined): string {
+    if (milliseconds == null || milliseconds === undefined) {
+      return '0:00';
+    }
+    const seconds = Math.floor(milliseconds / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  }
+
+  // Utility method to format numbers
+  static formatNumber(num: number | null | undefined): string {
+    if (num == null || num === undefined) {
+      return '0';
+    }
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + 'M';
+    } else if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'K';
+    }
+    return num.toString();
+  }
+
+  // Utility method to get time ago
+  static getTimeAgo(dateString: string | null | undefined): string {
+    if (!dateString) {
+      return 'unknown';
+    }
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return 'unknown';
+    }
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (diffInSeconds < 60) {
+      return 'just now';
+    } else if (diffInSeconds < 3600) {
+      const minutes = Math.floor(diffInSeconds / 60);
+      return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    } else if (diffInSeconds < 86400) {
+      const hours = Math.floor(diffInSeconds / 3600);
+      return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    } else if (diffInSeconds < 2592000) {
+      const days = Math.floor(diffInSeconds / 86400);
+      return `${days} day${days > 1 ? 's' : ''} ago`;
+    } else if (diffInSeconds < 31536000) {
+      const months = Math.floor(diffInSeconds / 2592000);
+      return `${months} month${months > 1 ? 's' : ''} ago`;
+    } else {
+      const years = Math.floor(diffInSeconds / 31536000);
+      return `${years} year${years > 1 ? 's' : ''} ago`;
+    }
   }
 
   // Refresh access token
@@ -159,4 +228,7 @@ export class SoundCloudAuth {
 
     return tokens.access_token;
   }
-} 
+}
+
+// Export the legacy type for backward compatibility
+export type { SoundCloudUserLegacy as SoundCloudUser }; 
